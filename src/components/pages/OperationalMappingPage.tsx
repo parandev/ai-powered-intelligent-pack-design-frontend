@@ -4,6 +4,7 @@ import { KpiCard } from '../shared/KpiCard'
 import { SubTabs } from '../shared/SubTabs'
 import { GanttChart } from '../shared/GanttChart'
 import { useApp } from '../../context/AppContext'
+import { SuggestionBar } from '../shared/SuggestionBar'
 
 const subTabs = ['Production Timeline', 'Cost Breakdown', 'Risk Register', 'Supplier Info']
 
@@ -26,8 +27,9 @@ export function OperationalMappingPage() {
     : 'Frosted Glass Jar'
 
   return (
-    <div className="flex-1 overflow-y-auto">
-      <div className="px-6 py-4 border-b border-gray-200 bg-white">
+    <div className="flex-1 flex flex-col min-h-0">
+      <div className="flex-1 overflow-y-auto">
+        <div className="px-6 py-4 border-b border-gray-200 bg-white">
         <div className="flex items-center justify-between mb-3">
           <div>
             <h2 className="text-base font-semibold text-gray-900">Operational Mapping</h2>
@@ -181,7 +183,9 @@ export function OperationalMappingPage() {
             </div>
           </div>
         )}
+        </div>
       </div>
+      <SuggestionBar />
     </div>
   )
 }

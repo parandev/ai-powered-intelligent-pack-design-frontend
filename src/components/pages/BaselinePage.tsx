@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Sparkles, Send } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { api } from '../../api/client'
+import { SuggestionBar } from '../shared/SuggestionBar'
 
 const suggestionChips = [
   'Luxury gold cap serum',
@@ -126,9 +127,10 @@ export function BaselinePage() {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-6">
-      <div className="max-w-3xl mx-auto space-y-6">
-        {history.map((msg, i) => {
+    <div className="flex-1 flex flex-col min-h-0">
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="max-w-3xl mx-auto space-y-6">
+          {history.map((msg, i) => {
           if (msg.role === 'system') return null
           const isUser = msg.role === 'user'
           return (
@@ -242,7 +244,9 @@ export function BaselinePage() {
             </div>
           </div>
         )}
+        </div>
       </div>
+      <SuggestionBar />
     </div>
   )
 }

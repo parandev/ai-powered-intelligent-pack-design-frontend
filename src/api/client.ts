@@ -135,6 +135,25 @@ export const api = {
     })
   },
 
+  fixCadCodeStart(
+    sessionId: string,
+    cadCode: string,
+    errorDetail: string,
+    prompt: string,
+    provider?: string,
+  ) {
+    return request<JobStartResponse>('/api/cad/model/fix-code/start', {
+      method: 'POST',
+      body: JSON.stringify({
+        session_id: sessionId,
+        cad_code: cadCode,
+        error_detail: errorDetail,
+        prompt,
+        provider: provider ?? null,
+      }),
+    })
+  },
+
   clearSession(sessionId: string) {
     return request<SessionClearResponse>('/api/session/clear', {
       method: 'POST',

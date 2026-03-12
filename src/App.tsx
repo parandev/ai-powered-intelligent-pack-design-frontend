@@ -1,9 +1,7 @@
 import { AppProvider, useApp } from './context/AppContext'
 import { Header } from './components/Header'
 import { Sidebar } from './components/Sidebar'
-import { BottomBar } from './components/layout/BottomBar'
 import { VersionPanel } from './components/layout/VersionPanel'
-import { SuggestionBar } from './components/shared/SuggestionBar'
 import { BaselinePage } from './components/pages/BaselinePage'
 import { PackageRecommendationPage } from './components/pages/PackageRecommendationPage'
 import { DesignSynthesisPage } from './components/pages/DesignSynthesisPage'
@@ -23,11 +21,6 @@ const showVersionPanel = new Set([
 function AppContent() {
   const { state } = useApp()
   const tab = state.activeTab
-  const hasImages = (state.sessionState?.images?.length ?? 0) > 0
-  const showSuggestionBar =
-    tab !== 'Final Report' &&
-    tab !== 'Asset Database' &&
-    (tab === 'Baseline' || hasImages)
 
   let page: React.ReactNode
   switch (tab) {
@@ -66,8 +59,6 @@ function AppContent() {
             <div className="flex-1 flex flex-col min-w-0">{page}</div>
             {showVersionPanel.has(tab) && <VersionPanel />}
           </div>
-          {showSuggestionBar && <SuggestionBar />}
-          <BottomBar />
         </div>
       </div>
     </div>

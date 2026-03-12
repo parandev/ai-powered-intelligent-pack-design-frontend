@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Download, Share2, ArrowLeft, Sparkles } from 'lucide-react'
+import { Download, Share2, ArrowLeft, Sparkles, Square } from 'lucide-react'
 import { SubTabs } from '../shared/SubTabs'
 import { useApp } from '../../context/AppContext'
 import { api } from '../../api/client'
+import { SuggestionBar } from '../shared/SuggestionBar'
 
 const subTabs = ['2D Diagram', '3D Generation', 'Specifications']
 
@@ -25,6 +26,7 @@ const specRows = [
 export function DesignSynthesisPage() {
   const { state, dispatch, refreshSession, isLoading } = useApp()
   const [activeSubTab, setActiveSubTab] = useState('2D Diagram')
+  const [cadAttempt, setCadAttempt] = useState(0)
   const loading2D = isLoading('cadsheet')
   const loading3D = isLoading('cadmodel')
 
@@ -35,6 +37,7 @@ export function DesignSynthesisPage() {
   const currentImage = state.selectedVersion
     ? images.find((img) => img.version === state.selectedVersion)
     : images[images.length - 1]
+  const activeVersion = approvedVersion ?? currentImage?.version ?? null
 
   const productName = state.sessionState?.spec?.product_type
     ? state.sessionState.spec.product_type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
@@ -65,20 +68,94 @@ export function DesignSynthesisPage() {
     }
   }, [dispatch, loading2D, productName, refreshSession, specFromSession?.intended_material, specFromSession?.size_or_volume, state.sessionId])
 
+  // Refs for controlling the 3D generation retry loop
+  const stop3DRequestedRef = useRef(false)
+  const is3DLoopRunningRef = useRef(false)
+
+  const handleStop3D = useCallback(() => {
+    stop3DRequestedRef.current = true
+  }, [])
+
   const handleGenerate3D = useCallback(async () => {
-    if (loading3D) return
+    if (loading3D || is3DLoopRunningRef.current) return
+    if (!activeVersion) {
+      console.warn('Select a design version first before generating the 3D model.')
+      return
+    }
+
+    is3DLoopRunningRef.current = true
+    stop3DRequestedRef.current = false
     dispatch({ type: 'SET_LOADING', key: 'cadmodel', loading: true })
+
+    const prompt = `Generate a parametric 3D CAD model (CadQuery Python) for: ${productName} ${specFromSession?.size_or_volume || '10 ml'} ${specFromSession?.intended_material || 'glass'} with ${specFromSession?.closure_type || 'screw'} closure`
+    const provider = 'gemini' // Default provider, can be made configurable
+    const maxAttempts = 10
+
+    let currentCode = ''
+    let currentError = ''
+    let success = false
+
     try {
-      const prompt = `Generate a parametric 3D CAD model (CadQuery Python) for: ${productName} ${specFromSession?.size_or_volume || '10 ml'} ${specFromSession?.intended_material || 'glass'} with ${specFromSession?.closure_type || 'screw'} closure`
-      const job = await api.generateCadModelStart(state.sessionId, prompt)
-      await api.pollJob(job.job_id)
-      await refreshSession()
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        if (stop3DRequestedRef.current) {
+          console.log(`3D generation stopped at attempt ${attempt + 1}`)
+          break
+        }
+
+        setCadAttempt(attempt + 1)
+        console.log(`3D generation attempt ${attempt + 1} of ${maxAttempts}`)
+
+        let job
+        if (attempt === 0) {
+          // First attempt: generate from scratch
+          job = await api.generateCadModelStart(state.sessionId, prompt, provider)
+        } else {
+          // Subsequent attempts: fix the code using previous error
+          job = await api.fixCadCodeStart(
+            state.sessionId,
+            currentCode,
+            currentError,
+            prompt,
+            provider,
+          )
+        }
+
+        const res = await api.pollJob(job.job_id, (status) => {
+          console.log(`Attempt ${attempt + 1} status: ${status}`)
+        })
+
+        // Check result
+        const result = res.result as Record<string, unknown> | null
+        const stepFile = result?.step_file as string | undefined
+        const cadCode = result?.cad_code as string | undefined
+        const errorDetail = result?.error_detail as string | undefined
+
+        if (stepFile && stepFile.length > 0) {
+          // Success!
+          success = true
+          console.log(`3D generation succeeded on attempt ${attempt + 1}`)
+          await refreshSession()
+          break
+        }
+
+        // Failed - save code and error for next retry
+        currentCode = cadCode || currentCode || ''
+        currentError = errorDetail || 'CAD execution failed.'
+        console.error(`Attempt ${attempt + 1} failed: ${currentError}`)
+      }
+
+      if (!success && !stop3DRequestedRef.current) {
+        console.error(`3D generation failed after ${maxAttempts} attempts`)
+      }
     } catch (e) {
-      console.error('CAD model generation failed:', e)
+      console.error('CAD model generation error:', e)
     } finally {
+      is3DLoopRunningRef.current = false
+      setCadAttempt(0)
       dispatch({ type: 'SET_LOADING', key: 'cadmodel', loading: false })
     }
   }, [
+    activeVersion,
     dispatch,
     loading3D,
     productName,
@@ -95,22 +172,22 @@ export function DesignSynthesisPage() {
   const lastAuto3DVersion = useRef<number | null>(null)
 
   useEffect(() => {
-    if (!approvedVersion) return
+    if (!activeVersion) return
 
     if (activeSubTab === '2D Diagram') {
-      if (!cadSheetImage && !loading2D && lastAuto2DVersion.current !== approvedVersion) {
-        lastAuto2DVersion.current = approvedVersion
+      if (!cadSheetImage && !loading2D && lastAuto2DVersion.current !== activeVersion) {
+        lastAuto2DVersion.current = activeVersion
         void handleGenerate2D()
       }
     }
 
     if (activeSubTab === '3D Generation') {
-      if (!cadStepFile && !loading3D && lastAuto3DVersion.current !== approvedVersion) {
-        lastAuto3DVersion.current = approvedVersion
+      if (!cadStepFile && !loading3D && lastAuto3DVersion.current !== activeVersion) {
+        lastAuto3DVersion.current = activeVersion
         void handleGenerate3D()
       }
     }
-  }, [activeSubTab, approvedVersion, cadSheetImage, cadStepFile, loading2D, loading3D, handleGenerate2D, handleGenerate3D])
+  }, [activeSubTab, activeVersion, cadSheetImage, cadStepFile, loading2D, loading3D, handleGenerate2D, handleGenerate3D])
 
   // Right sidebar with selected version image
   const renderVersionSidebar = () => (
@@ -201,16 +278,16 @@ export function DesignSynthesisPage() {
                   </>
                 ) : (
                   <div className="flex flex-col items-center py-8">
-                    {!approvedVersion ? (
+                    {!activeVersion ? (
                       <p className="text-sm text-gray-500">
-                        Approve a design version first to generate the 2D technical drawing.
+                        Select a design version first to generate the 2D technical drawing.
                       </p>
                     ) : (
                       <>
                         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 max-w-3xl w-full min-h-[400px] flex flex-col items-center justify-center">
                           <div className="w-10 h-10 border-2 border-gray-200 border-t-orange-500 rounded-full animate-spin mb-4" />
                           <p className="text-sm text-gray-500">
-                            Generating 2D diagram from approved version v{approvedVersion}…
+                            Generating 2D diagram from version v{activeVersion}…
                           </p>
                         </div>
                         <h3 className="text-center text-base font-medium text-gray-700 mt-4">
@@ -254,17 +331,45 @@ export function DesignSynthesisPage() {
                   </>
                 ) : (
                   <div className="flex flex-col items-center py-8">
-                    {!approvedVersion ? (
-                      <p className="text-sm text-gray-500">
-                        Approve a design version first to generate the 3D model.
-                      </p>
-                    ) : (
+                    {!activeVersion ? (
+                      <p className="text-sm text-gray-500">Select a design version first to generate the 3D model.</p>
+                    ) : loading3D ? (
                       <>
                         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 max-w-2xl w-full min-h-[400px] flex flex-col items-center justify-center">
                           <div className="w-10 h-10 border-2 border-gray-200 border-t-orange-500 rounded-full animate-spin mb-4" />
-                          <p className="text-sm text-gray-500">
-                            Generating 3D model from approved version v{approvedVersion}…
+                          <p className="text-sm text-gray-500 mb-2">
+                            Generating 3D model from version v{activeVersion}…
                           </p>
+                          {cadAttempt > 0 && (
+                            <p className="text-xs text-gray-400">
+                              Attempt {cadAttempt} of 10
+                            </p>
+                          )}
+                          <button
+                            onClick={handleStop3D}
+                            className="mt-4 flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors"
+                          >
+                            <Square className="w-4 h-4" />
+                            Stop
+                          </button>
+                        </div>
+                        <h3 className="text-center text-base font-medium text-gray-700 mt-4">
+                          {productName} - 3D Generation Model
+                        </h3>
+                      </>
+                    ) : (
+                      <>
+                        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 max-w-2xl w-full min-h-[400px] flex flex-col items-center justify-center">
+                          <p className="text-sm text-gray-500 mb-4">
+                            Ready to generate 3D model from version v{activeVersion}
+                          </p>
+                          <button
+                            onClick={handleGenerate3D}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm font-medium transition-colors"
+                          >
+                            <Sparkles className="w-4 h-4" />
+                            Generate 3D Model
+                          </button>
                         </div>
                         <h3 className="text-center text-base font-medium text-gray-700 mt-4">
                           {productName} - 3D Generation Model
@@ -359,6 +464,7 @@ export function DesignSynthesisPage() {
           {currentImage && renderVersionSidebar()}
         </div>
       </div>
+      <SuggestionBar />
     </div>
   )
 }
