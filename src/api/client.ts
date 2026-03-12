@@ -16,9 +16,16 @@ import type {
 
 const BASE = ''
 
+function defaultHeaders(): Record<string, string> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  const apiKey = import.meta.env.VITE_STRAIVE_API_KEY
+  if (apiKey) headers['X-Straive-Api-Key'] = apiKey
+  return headers
+}
+
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${url}`, {
-    headers: { 'Content-Type': 'application/json' },
+    headers: { ...defaultHeaders(), ...(options?.headers as Record<string, string>) },
     ...options,
   })
   if (!res.ok) {
@@ -141,7 +148,10 @@ export const api = {
     const form = new FormData()
     form.append('session_id', sessionId)
     form.append('file', file)
-    const res = await fetch(`${BASE}/api/brief/upload`, { method: 'POST', body: form })
+    const headers: Record<string, string> = {}
+    const apiKey = import.meta.env.VITE_STRAIVE_API_KEY
+    if (apiKey) headers['X-Straive-Api-Key'] = apiKey
+    const res = await fetch(`${BASE}/api/brief/upload`, { method: 'POST', body: form, headers })
     if (!res.ok) throw new Error(`API ${res.status}: ${await res.text()}`)
     return res.json() as Promise<BriefUploadResponse>
   },

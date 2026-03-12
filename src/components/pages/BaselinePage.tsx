@@ -88,7 +88,7 @@ export function BaselinePage() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend(input)}
-              placeholder="Frosted glass jar 15ml Glass Premium"
+              placeholder="Describe your packaging..."
               disabled={loading}
               className="flex-1 bg-transparent outline-none text-gray-700 placeholder-gray-400 text-sm"
             />
@@ -125,9 +125,12 @@ export function BaselinePage() {
     )
   }
 
+  const showStickySuggestions = !loading && hasHistory && images.length > 0
+
   return (
-    <div className="flex-1 overflow-y-auto p-6">
-      <div className="max-w-3xl mx-auto space-y-6">
+    <div className={`flex-1 flex flex-col min-h-0 ${showStickySuggestions ? '' : 'overflow-y-auto'}`}>
+      <div className={showStickySuggestions ? 'flex-1 overflow-y-auto p-6 min-h-0' : 'p-6'}>
+        <div className="max-w-3xl mx-auto space-y-6">
         {history.map((msg, i) => {
           if (msg.role === 'system') return null
           const isUser = msg.role === 'user'
@@ -206,6 +209,7 @@ export function BaselinePage() {
                 </button>
               ))}
             </div>
+
           </div>
         )}
 
@@ -241,7 +245,59 @@ export function BaselinePage() {
             </div>
           </div>
         )}
+        </div>
       </div>
+
+      {/* Sticky suggestions box at bottom of viewport */}
+      {showStickySuggestions && (
+        <div className="shrink-0 p-6 pt-4 bg-[var(--page-bg,inherit)]">
+          <div className="max-w-3xl mx-auto bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles className="w-4 h-4 text-orange-500" />
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                Suggestions
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-2 mb-4">
+              {suggestionChips.map((chip) => (
+                <button
+                  key={chip}
+                  onClick={() => {
+                    setInput(chip)
+                    handleSend(chip)
+                  }}
+                  className="px-4 py-2 bg-white border border-gray-200 rounded-full text-sm text-gray-600 hover:border-orange-300 hover:text-orange-600 transition-colors"
+                >
+                  {chip}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-3 bg-white rounded-full border border-gray-200 px-4 py-2.5">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSend(input)}
+                placeholder="Describe your packaging..."
+                disabled={loading}
+                className="flex-1 bg-transparent outline-none text-gray-700 placeholder-gray-400 text-sm"
+              />
+              <button
+                onClick={() => handleSend(input)}
+                disabled={loading || !input.trim()}
+                className="flex items-center gap-2 text-orange-400 hover:text-orange-500 font-medium text-sm transition-colors px-4 py-2 rounded-full border border-orange-200 hover:border-orange-300 hover:bg-orange-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <div className="w-4 h-4 border-2 border-orange-300 border-t-orange-500 rounded-full animate-spin" />
+                ) : (
+                  <Sparkles className="w-4 h-4" />
+                )}
+                Generate
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
