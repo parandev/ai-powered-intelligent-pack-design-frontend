@@ -1,19 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Download, Share2, ArrowLeft, Sparkles, Wand2 } from 'lucide-react'
+import { Download, Share2, ArrowLeft, Sparkles } from 'lucide-react'
 import { SubTabs } from '../shared/SubTabs'
 import { useApp } from '../../context/AppContext'
 import { api } from '../../api/client'
 
 const subTabs = ['2D Diagram', '3D Generation', 'Specifications']
-
-const recommendedEditChips = [
-  'Increase cap height',
-  'Make tube bigger',
-  'Change to matte finish',
-  'Add metallic accent',
-  'Enlarge brand logo',
-  'Adjust bottle proportions',
-]
 
 const materialBreakdown = [
   { name: 'Borosilicate Glass', pct: 60, color: 'bg-gray-800' },
@@ -121,21 +112,6 @@ export function DesignSynthesisPage() {
     }
   }, [activeSubTab, approvedVersion, cadSheetImage, cadStepFile, loading2D, loading3D, handleGenerate2D, handleGenerate3D])
 
-  const [editInput, setEditInput] = useState('')
-  const loadingEdit = isLoading('edit')
-
-  const handleEditSend = async (text: string) => {
-    if (!text.trim() || loadingEdit) return
-    setEditInput('')
-    // Placeholder for edit action - could call an API in the future
-    console.log('Edit requested:', text)
-  }
-
-  const handleEditChipClick = (chip: string) => {
-    setEditInput(chip)
-    handleEditSend(chip)
-  }
-
   // Right sidebar with selected version image
   const renderVersionSidebar = () => (
     <div className="w-24 shrink-0 pl-4">
@@ -224,18 +200,23 @@ export function DesignSynthesisPage() {
                     </h3>
                   </>
                 ) : (
-                  <div className="flex flex-col items-center justify-center py-20">
+                  <div className="flex flex-col items-center py-8">
                     {!approvedVersion ? (
                       <p className="text-sm text-gray-500">
                         Approve a design version first to generate the 2D technical drawing.
                       </p>
                     ) : (
-                      <div className="flex flex-col items-center gap-3">
-                        <p className="text-sm text-gray-500">
-                          Generating 2D diagram from approved version v{approvedVersion}…
-                        </p>
-                        <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin" />
-                      </div>
+                      <>
+                        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 max-w-3xl w-full min-h-[400px] flex flex-col items-center justify-center">
+                          <div className="w-10 h-10 border-2 border-gray-200 border-t-orange-500 rounded-full animate-spin mb-4" />
+                          <p className="text-sm text-gray-500">
+                            Generating 2D diagram from approved version v{approvedVersion}…
+                          </p>
+                        </div>
+                        <h3 className="text-center text-base font-medium text-gray-700 mt-4">
+                          {productName} - 2D Diagram
+                        </h3>
+                      </>
                     )}
                   </div>
                 )}
@@ -272,18 +253,23 @@ export function DesignSynthesisPage() {
                     </h3>
                   </>
                 ) : (
-                  <div className="flex flex-col items-center justify-center py-20">
+                  <div className="flex flex-col items-center py-8">
                     {!approvedVersion ? (
                       <p className="text-sm text-gray-500">
                         Approve a design version first to generate the 3D model.
                       </p>
                     ) : (
-                      <div className="flex flex-col items-center gap-3">
-                        <p className="text-sm text-gray-500">
-                          Generating 3D model from approved version v{approvedVersion}…
-                        </p>
-                        <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin" />
-                      </div>
+                      <>
+                        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 max-w-2xl w-full min-h-[400px] flex flex-col items-center justify-center">
+                          <div className="w-10 h-10 border-2 border-gray-200 border-t-orange-500 rounded-full animate-spin mb-4" />
+                          <p className="text-sm text-gray-500">
+                            Generating 3D model from approved version v{approvedVersion}…
+                          </p>
+                        </div>
+                        <h3 className="text-center text-base font-medium text-gray-700 mt-4">
+                          {productName} - 3D Generation Model
+                        </h3>
+                      </>
                     )}
                   </div>
                 )}
@@ -371,52 +357,6 @@ export function DesignSynthesisPage() {
 
           {/* Right sidebar with selected version */}
           {currentImage && renderVersionSidebar()}
-        </div>
-      </div>
-
-      {/* Sticky Recommended Edits section at bottom */}
-      <div className="shrink-0 p-6 pt-4 bg-gray-50 border-t border-gray-200">
-        <div className="max-w-5xl mx-auto bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <Wand2 className="w-4 h-4 text-orange-500" />
-            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Recommended Edits
-            </span>
-          </div>
-          <div className="flex flex-wrap gap-2 mb-4">
-            {recommendedEditChips.map((chip) => (
-              <button
-                key={chip}
-                onClick={() => handleEditChipClick(chip)}
-                className="px-4 py-2 bg-white border border-gray-200 rounded-full text-sm text-gray-600 hover:border-orange-300 hover:text-orange-600 transition-colors"
-              >
-                {chip}
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center gap-3 bg-white rounded-full border border-gray-200 px-4 py-2.5">
-            <input
-              type="text"
-              value={editInput}
-              onChange={(e) => setEditInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleEditSend(editInput)}
-              placeholder="Describe your packaging..."
-              disabled={loadingEdit}
-              className="flex-1 bg-transparent outline-none text-gray-700 placeholder-gray-400 text-sm"
-            />
-            <button
-              onClick={() => handleEditSend(editInput)}
-              disabled={loadingEdit || !editInput.trim()}
-              className="flex items-center gap-2 text-orange-400 hover:text-orange-500 font-medium text-sm transition-colors px-4 py-2 rounded-full border border-orange-200 hover:border-orange-300 hover:bg-orange-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loadingEdit ? (
-                <div className="w-4 h-4 border-2 border-orange-300 border-t-orange-500 rounded-full animate-spin" />
-              ) : (
-                <Sparkles className="w-4 h-4" />
-              )}
-              Generate
-            </button>
-          </div>
         </div>
       </div>
     </div>
