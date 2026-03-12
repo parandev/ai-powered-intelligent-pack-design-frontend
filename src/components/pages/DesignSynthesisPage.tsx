@@ -5,6 +5,47 @@ import { useApp } from '../../context/AppContext'
 import { api } from '../../api/client'
 import { SuggestionBar } from '../shared/SuggestionBar'
 
+// STEP Viewer component for displaying 3D CAD models
+function StepViewer({ stepFileUrl }: { stepFileUrl: string }) {
+  const iframeRef = useRef<HTMLIFrameElement>(null)
+  const [isReady, setIsReady] = useState(false)
+
+  useEffect(() => {
+    const iframe = iframeRef.current
+    if (!iframe) return
+
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'viewer-ready') {
+        setIsReady(true)
+      }
+    }
+
+    window.addEventListener('message', handleMessage)
+    return () => window.removeEventListener('message', handleMessage)
+  }, [])
+
+  useEffect(() => {
+    if (isReady && stepFileUrl && iframeRef.current) {
+      iframeRef.current.contentWindow?.postMessage(
+        { type: 'load-step', url: stepFileUrl },
+        '*'
+      )
+    }
+  }, [isReady, stepFileUrl])
+
+  return (
+    <div className="w-full h-full min-h-[400px] bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
+      <iframe
+        ref={iframeRef}
+        src="/step_viewer.html"
+        className="w-full h-full border-0"
+        title="3D STEP Viewer"
+        sandbox="allow-scripts allow-same-origin"
+      />
+    </div>
+  )
+}
+
 const subTabs = ['2D Diagram', '3D Generation', 'Specifications']
 
 const materialBreakdown = [
@@ -301,25 +342,17 @@ export function DesignSynthesisPage() {
             )}
 
             {activeSubTab === '3D Generation' && (
-              <div className="flex flex-col items-center">
+              <div className="flex flex-col items-center w-full">
                 {cadStepFile ? (
                   <>
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 max-w-2xl w-full flex flex-col items-center">
-                      {currentImage ? (
-                        <img
-                          src={currentImage.image_url_or_base64}
-                          alt="3D Model Preview"
-                          className="w-80 h-80 object-contain rounded-lg"
-                        />
-                      ) : (
-                        <div className="w-80 h-80 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-sm">
-                          3D Model Generated
-                        </div>
-                      )}
+                    <div className="w-full max-w-4xl h-[500px]">
+                      <StepViewer stepFileUrl={cadStepFile} />
+                    </div>
+                    <div className="flex items-center gap-4 mt-4">
                       <a
                         href={cadStepFile}
                         download
-                        className="mt-4 flex items-center gap-2 text-orange-500 hover:text-orange-600 text-sm font-medium"
+                        className="flex items-center gap-2 text-orange-500 hover:text-orange-600 text-sm font-medium"
                       >
                         <Download className="w-4 h-4" />
                         Download STEP File
