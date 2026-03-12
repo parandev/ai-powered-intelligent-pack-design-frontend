@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Download, Share2, ArrowLeft, Sparkles, Wand2 } from 'lucide-react'
 import { SubTabs } from '../shared/SubTabs'
 import { useApp } from '../../context/AppContext'
@@ -59,7 +59,7 @@ export function DesignSynthesisPage() {
       }))
     : specRows
 
-  const handleGenerate2D = async () => {
+  const handleGenerate2D = useCallback(async () => {
     if (loading2D) return
     dispatch({ type: 'SET_LOADING', key: 'cadsheet', loading: true })
     try {
@@ -72,9 +72,9 @@ export function DesignSynthesisPage() {
     } finally {
       dispatch({ type: 'SET_LOADING', key: 'cadsheet', loading: false })
     }
-  }
+  }, [dispatch, loading2D, productName, refreshSession, specFromSession?.intended_material, specFromSession?.size_or_volume, state.sessionId])
 
-  const handleGenerate3D = async () => {
+  const handleGenerate3D = useCallback(async () => {
     if (loading3D) return
     dispatch({ type: 'SET_LOADING', key: 'cadmodel', loading: true })
     try {
@@ -87,7 +87,39 @@ export function DesignSynthesisPage() {
     } finally {
       dispatch({ type: 'SET_LOADING', key: 'cadmodel', loading: false })
     }
-  }
+  }, [
+    dispatch,
+    loading3D,
+    productName,
+    refreshSession,
+    specFromSession?.closure_type,
+    specFromSession?.intended_material,
+    specFromSession?.size_or_volume,
+    state.sessionId,
+  ])
+
+  // Auto-trigger generation when switching tabs.
+  // Use refs to prevent re-triggering on rerenders while the same approved version is selected.
+  const lastAuto2DVersion = useRef<number | null>(null)
+  const lastAuto3DVersion = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (!approvedVersion) return
+
+    if (activeSubTab === '2D Diagram') {
+      if (!cadSheetImage && !loading2D && lastAuto2DVersion.current !== approvedVersion) {
+        lastAuto2DVersion.current = approvedVersion
+        void handleGenerate2D()
+      }
+    }
+
+    if (activeSubTab === '3D Generation') {
+      if (!cadStepFile && !loading3D && lastAuto3DVersion.current !== approvedVersion) {
+        lastAuto3DVersion.current = approvedVersion
+        void handleGenerate3D()
+      }
+    }
+  }, [activeSubTab, approvedVersion, cadSheetImage, cadStepFile, loading2D, loading3D, handleGenerate2D, handleGenerate3D])
 
   const [editInput, setEditInput] = useState('')
   const loadingEdit = isLoading('edit')
@@ -198,23 +230,12 @@ export function DesignSynthesisPage() {
                         Approve a design version first to generate the 2D technical drawing.
                       </p>
                     ) : (
-                      <>
-                        <p className="text-sm text-gray-500 mb-4">
-                          Generate a 2D technical drawing from the approved design version v{approvedVersion}.
+                      <div className="flex flex-col items-center gap-3">
+                        <p className="text-sm text-gray-500">
+                          Generating 2D diagram from approved version v{approvedVersion}…
                         </p>
-                        <button
-                          onClick={handleGenerate2D}
-                          disabled={loading2D}
-                          className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-6 py-2.5 rounded-lg font-medium text-sm transition-colors disabled:opacity-50"
-                        >
-                          {loading2D ? (
-                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                          ) : (
-                            <Sparkles className="w-4 h-4" />
-                          )}
-                          Generate 2D Diagram
-                        </button>
-                      </>
+                        <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin" />
+                      </div>
                     )}
                   </div>
                 )}
@@ -257,23 +278,12 @@ export function DesignSynthesisPage() {
                         Approve a design version first to generate the 3D model.
                       </p>
                     ) : (
-                      <>
-                        <p className="text-sm text-gray-500 mb-4">
-                          Generate a 3D STEP CAD model from approved version v{approvedVersion}.
+                      <div className="flex flex-col items-center gap-3">
+                        <p className="text-sm text-gray-500">
+                          Generating 3D model from approved version v{approvedVersion}…
                         </p>
-                        <button
-                          onClick={handleGenerate3D}
-                          disabled={loading3D}
-                          className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-6 py-2.5 rounded-lg font-medium text-sm transition-colors disabled:opacity-50"
-                        >
-                          {loading3D ? (
-                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                          ) : (
-                            <Sparkles className="w-4 h-4" />
-                          )}
-                          Generate 3D Model
-                        </button>
-                      </>
+                        <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin" />
+                      </div>
                     )}
                   </div>
                 )}
