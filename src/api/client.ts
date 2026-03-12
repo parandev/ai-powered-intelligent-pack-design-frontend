@@ -11,6 +11,8 @@ import type {
   BaselineSkipResponse,
   SessionClearResponse,
   AssetCatalogResponse,
+  AssetIndexResponse,
+  AssetDeleteResponse,
   BriefUploadResponse,
 } from '../types'
 
@@ -142,6 +144,20 @@ export const api = {
 
   getAssetCatalog() {
     return request<AssetCatalogResponse>('/api/assets/catalog')
+  },
+
+  indexAssetMetadata(forceReindex = false) {
+    return request<AssetIndexResponse>('/api/assets/index', {
+      method: 'POST',
+      body: JSON.stringify({ force_reindex: forceReindex }),
+    })
+  },
+
+  deleteAsset(assetRelPath: string) {
+    return request<AssetDeleteResponse>('/api/assets/delete', {
+      method: 'POST',
+      body: JSON.stringify({ asset_rel_path: assetRelPath }),
+    })
   },
 
   async uploadBrief(sessionId: string, file: File) {

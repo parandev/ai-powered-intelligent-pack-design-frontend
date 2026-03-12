@@ -3,12 +3,14 @@ import { Header } from './components/Header'
 import { Sidebar } from './components/Sidebar'
 import { BottomBar } from './components/layout/BottomBar'
 import { VersionPanel } from './components/layout/VersionPanel'
+import { SuggestionBar } from './components/shared/SuggestionBar'
 import { BaselinePage } from './components/pages/BaselinePage'
 import { PackageRecommendationPage } from './components/pages/PackageRecommendationPage'
 import { DesignSynthesisPage } from './components/pages/DesignSynthesisPage'
 import { OperationalMappingPage } from './components/pages/OperationalMappingPage'
 import { CustomerIntelligencePage } from './components/pages/CustomerIntelligencePage'
 import { FinalReportPage } from './components/pages/FinalReportPage'
+import { AssetDatabasePage } from './components/pages/AssetDatabasePage'
 
 const showVersionPanel = new Set([
   'Package Recommendation',
@@ -21,6 +23,11 @@ const showVersionPanel = new Set([
 function AppContent() {
   const { state } = useApp()
   const tab = state.activeTab
+  const hasImages = (state.sessionState?.images?.length ?? 0) > 0
+  const showSuggestionBar =
+    tab !== 'Final Report' &&
+    tab !== 'Asset Database' &&
+    (tab === 'Baseline' || hasImages)
 
   let page: React.ReactNode
   switch (tab) {
@@ -42,6 +49,9 @@ function AppContent() {
     case 'Final Report':
       page = <FinalReportPage />
       break
+    case 'Asset Database':
+      page = <AssetDatabasePage />
+      break
     default:
       page = <BaselinePage />
   }
@@ -56,6 +66,7 @@ function AppContent() {
             <div className="flex-1 flex flex-col min-w-0">{page}</div>
             {showVersionPanel.has(tab) && <VersionPanel />}
           </div>
+          {showSuggestionBar && <SuggestionBar />}
           <BottomBar />
         </div>
       </div>

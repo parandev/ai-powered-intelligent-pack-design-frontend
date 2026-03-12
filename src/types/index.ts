@@ -5,6 +5,7 @@ export type TabName =
   | 'Operational Mapping'
   | 'Customer Intelligence Report'
   | 'Final Report'
+  | 'Asset Database'
 
 export interface DesignSpec {
   product_type: string | null
@@ -198,6 +199,16 @@ export interface AssetCatalogItem {
 export interface AssetCatalogResponse {
   total: number
   items: AssetCatalogItem[]
+}
+
+export interface AssetIndexResponse {
+  total_assets: number
+  indexed_count: number
+  message?: string
+}
+
+export interface AssetDeleteResponse {
+  message: string
 }
 
 export interface BriefUploadResponse {

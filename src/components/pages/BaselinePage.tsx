@@ -242,7 +242,7 @@ export function BaselinePage() {
             </div>
           </div>
         )}
-        </div>
       </div>
+    </div>
   )
 }

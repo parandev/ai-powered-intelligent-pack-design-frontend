@@ -73,7 +73,14 @@ export function Sidebar() {
           <Plus className="w-4 h-4" />
           New Design
         </button>
-        <button className="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 py-2.5 px-4 rounded-lg font-medium text-sm transition-colors">
+        <button
+          onClick={() => dispatch({ type: 'SET_TAB', tab: 'Asset Database' })}
+          className={`w-full flex items-center justify-center gap-2 border py-2.5 px-4 rounded-lg font-medium text-sm transition-colors ${
+            state.activeTab === 'Asset Database'
+              ? 'bg-orange-500 text-white border-orange-500'
+              : 'bg-white border-gray-300 hover:bg-gray-50 text-gray-700'
+          }`}
+        >
           <Database className="w-4 h-4" />
           Asset Database
         </button>
