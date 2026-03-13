@@ -52,7 +52,7 @@ function AppContent() {
   return (
     <div className="h-screen flex flex-col bg-gray-50">
       <Header />
-      <div className="flex flex-1 min-h-0">
+      <div className="flex flex-1">
         <Sidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <div className="flex flex-1 min-h-0">
