@@ -3,6 +3,8 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 // @ts-expect-error no types available for occt-import-js
 import occtimportjs from 'occt-import-js'
+import occtWasmUrl from 'occt-import-js/dist/occt-import-js.wasm?url'
+import occtWorkerUrl from 'occt-import-js/dist/occt-import-js-worker.js?url'
 
 interface StepViewerProps {
   stepFileUrl: string
@@ -13,7 +15,13 @@ let occtPromise: Promise<unknown> | null = null
 
 function getOcct() {
   if (!occtPromise) {
-    occtPromise = occtimportjs()
+    occtPromise = occtimportjs({
+      locateFile: (path: string) => {
+        if (path.endsWith('.wasm')) return occtWasmUrl
+        if (path.endsWith('-worker.js')) return occtWorkerUrl
+        return path
+      },
+    })
   }
   return occtPromise
 }
@@ -91,6 +99,17 @@ export function StepViewer({ stepFileUrl, className = '' }: StepViewerProps) {
   useEffect(() => {
     if (!stepFileUrl || loadedUrlRef.current === stepFileUrl || !sceneRef.current) return
 
+    // Debug: log what we received
+    const isDataUrl = stepFileUrl.startsWith('data:')
+    const isBase64 = stepFileUrl.includes('base64,')
+    console.log('[StepViewer] stepFileUrl received:', {
+      length: stepFileUrl.length,
+      isDataUrl,
+      isBase64,
+      prefix: stepFileUrl.slice(0, 80),
+      fullUrl: isDataUrl ? `data:...${stepFileUrl.length} chars` : stepFileUrl,
+    })
+
     let cancelled = false
 
     async function loadStep() {
@@ -102,18 +121,54 @@ export function StepViewer({ stepFileUrl, className = '' }: StepViewerProps) {
       const occt: any = await getOcct()
       if (cancelled) return
 
-      setStatus('Fetching STEP file...')
-      const response = await fetch(stepFileUrl)
-      if (!response.ok) {
-        setStatus(`Failed to fetch STEP file (${response.status})`)
+      let fileBuffer: Uint8Array
+
+      if (stepFileUrl.startsWith('data:')) {
+        // Base64 data URL: data:application/octet-stream;base64,<payload>
+        const base64Match = stepFileUrl.match(/^data:[^;]+;base64,(.+)$/)
+        if (!base64Match) {
+          console.error('[StepViewer] Invalid data URL format (expected base64)', stepFileUrl.slice(0, 100))
+          setStatus('Invalid base64 data URL')
+          return
+        }
+        const binaryString = atob(base64Match[1])
+        fileBuffer = new Uint8Array(binaryString.length)
+        for (let i = 0; i < binaryString.length; i++) {
+          fileBuffer[i] = binaryString.charCodeAt(i)
+        }
+        console.log('[StepViewer] Decoded base64 STEP:', { bytes: fileBuffer.length, firstBytes: Array.from(fileBuffer.slice(0, 8)) })
+      } else {
+        setStatus('Fetching STEP file...')
+        const response = await fetch(stepFileUrl)
+        if (!response.ok) {
+          console.error('[StepViewer] Fetch failed:', response.status, response.statusText, stepFileUrl)
+          setStatus(`Failed to fetch STEP file (${response.status})`)
+          return
+        }
+        const blob = await response.blob()
+        console.log('[StepViewer] Fetched URL:', { url: stepFileUrl, blobSize: blob.size, contentType: blob.type })
+        fileBuffer = new Uint8Array(await blob.arrayBuffer())
+      }
+
+      if (cancelled) return
+      if (fileBuffer.length === 0) {
+        console.error('[StepViewer] Empty STEP content')
+        setStatus('Empty STEP file')
         return
       }
-      const fileBuffer = new Uint8Array(await response.arrayBuffer())
-      if (cancelled) return
+      // STEP magic / text start (ISO-10303-21)
+      const textStart = new TextDecoder().decode(fileBuffer.slice(0, 32))
+      console.log('[StepViewer] STEP content preview:', { bytes: fileBuffer.length, textStart })
 
       setStatus('Parsing STEP geometry...')
       const result = occt.ReadStepFile(fileBuffer, null)
       if (cancelled) return
+
+      console.log('[StepViewer] OCCT result:', { meshCount: result?.meshes?.length ?? 0, resultKeys: result ? Object.keys(result) : [] })
+      if (!result?.meshes?.length) {
+        setStatus('No geometry in STEP file')
+        return
+      }
 
       if (ctx.currentModel) {
         ctx.scene.remove(ctx.currentModel)
