@@ -67,16 +67,16 @@ export function FinalReportPage() {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto">
-      <div className="px-6 py-4 border-b border-gray-200 bg-white">
-        <div className="flex items-center justify-between">
+    <div className="flex-1 min-h-0 overflow-y-auto">
+      <div className="px-4 sm:px-6 py-4 border-b border-gray-200 bg-white">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 className="text-base font-semibold text-gray-900">Final Selection</h2>
             <p className="text-xs text-gray-500">
               {state.sessionState?.spec?.size_or_volume || '10ml'} {productName} — Ready for production authorization
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <button className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900">
               <Download className="w-4 h-4" />
               Download
@@ -96,7 +96,7 @@ export function FinalReportPage() {
         </div>
       </div>
 
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-6">
         {/* Approval Workflow */}
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-6">

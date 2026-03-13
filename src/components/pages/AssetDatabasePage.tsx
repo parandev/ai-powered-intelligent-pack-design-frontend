@@ -122,7 +122,7 @@ export function AssetDatabasePage() {
   }, [refreshCatalog, stopProgressTicker])
 
   return (
-    <div className="flex flex-col h-full min-h-0 p-6 overflow-auto">
+    <div className="flex flex-col h-full min-h-0 p-4 sm:p-6 overflow-auto">
       <div className="flex items-center gap-2 mb-6">
         <Database className="w-6 h-6 text-orange-500" />
         <h1 className="text-xl font-semibold text-gray-900">Asset Database</h1>

@@ -236,9 +236,9 @@ export function DesignSynthesisPage() {
   return (
     <div className="flex-1 flex flex-col min-h-0">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-3 border-b border-gray-200 bg-white shrink-0">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 px-4 sm:px-6 py-2 sm:py-3 border-b border-gray-200 bg-white shrink-0">
         <SubTabs tabs={subTabs} activeTab={activeSubTab} onTabChange={setActiveSubTab} />
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <button className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900">
             <Download className="w-4 h-4" />
             Download
@@ -258,8 +258,8 @@ export function DesignSynthesisPage() {
       </div>
 
       {/* Main content area with scroll */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="flex p-6">
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        <div className="flex flex-col md:flex-row p-4 sm:p-6">
           {/* Main content */}
           <div className="flex-1 min-w-0">
             {activeSubTab === '2D Diagram' && (
@@ -308,7 +308,7 @@ export function DesignSynthesisPage() {
                     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden max-w-3xl w-full">
                       <StepViewer
                         stepFileUrl={cadStepFile}
-                        className="w-full h-[500px]"
+                        className="w-full h-[280px] sm:h-[400px] md:h-[500px]"
                       />
                     </div>
                     <div className="flex items-center justify-center gap-4 mt-4">
@@ -456,8 +456,35 @@ export function DesignSynthesisPage() {
             )}
           </div>
 
-          {/* Right sidebar with selected version */}
-          {currentImage && renderVersionSidebar()}
+          {/* Right sidebar with selected version - below main content on small screens */}
+          {currentImage && (
+            <div className="md:hidden mt-4 pt-4 border-t border-gray-200">
+              <div className="text-xs text-gray-500 mb-2">Base Image</div>
+              <div className="flex gap-2 overflow-x-auto pb-2">
+                {images.map((img) => (
+                  <button
+                    key={img.image_id}
+                    onClick={() => dispatch({ type: 'SET_SELECTED_VERSION', version: img.version })}
+                    className={`shrink-0 w-20 rounded-lg overflow-hidden border-2 transition-colors ${
+                      state.selectedVersion === img.version ? 'border-orange-500' : 'border-gray-200 hover:border-orange-300'
+                    }`}
+                  >
+                    <img
+                      src={img.image_url_or_base64}
+                      alt={`Version ${img.version}`}
+                      className="w-full h-16 object-cover"
+                    />
+                    <div className="text-xs text-center text-gray-500 py-0.5">v{img.version}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          {currentImage && (
+            <div className="hidden md:block">
+              {renderVersionSidebar()}
+            </div>
+          )}
         </div>
       </div>
       <SuggestionBar />

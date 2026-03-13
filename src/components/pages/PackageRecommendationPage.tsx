@@ -41,8 +41,8 @@ export function PackageRecommendationPage() {
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
-      <div className="flex-1 overflow-y-auto relative">
-        <div className="absolute top-4 right-4 flex items-center gap-3 z-10">
+      <div className="flex-1 min-h-0 overflow-y-auto relative">
+        <div className="absolute top-2 right-2 sm:top-4 sm:right-4 flex flex-wrap items-center gap-2 sm:gap-3 z-10">
           <button className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900">
             <Download className="w-4 h-4" />
             Download
@@ -60,7 +60,7 @@ export function PackageRecommendationPage() {
           </button>
         </div>
 
-        <div className="flex flex-col items-center justify-center min-h-full p-12">
+        <div className="flex flex-col items-center justify-center min-h-full p-4 sm:p-8 md:p-12">
           <div className="max-w-md w-full">
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
               <img

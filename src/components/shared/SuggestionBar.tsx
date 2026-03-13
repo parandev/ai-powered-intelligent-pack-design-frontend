@@ -112,15 +112,15 @@ export function SuggestionBar() {
   if (!navTabs.length && !showSuggestions) return null
 
   return (
-    <div className="w-full shrink-0 bg-gray-50 py-3">
-      <div className="w-full max-w-6xl mx-auto px-6">
+    <div className="w-full shrink-0 bg-gray-50 py-2 md:py-3 max-h-[40vh] md:max-h-none overflow-y-auto overflow-x-hidden">
+      <div className="w-full max-w-6xl mx-auto px-4 md:px-6">
         {navTabs.length > 0 && (
-          <div className="flex items-center justify-center gap-4 py-2 mb-3">
+          <div className="flex items-center gap-2 md:gap-4 py-1.5 md:py-2 mb-2 md:mb-3 overflow-x-auto flex-nowrap justify-start md:justify-center">
             {navTabs.map((t) => (
               <button
                 key={t}
                 onClick={() => dispatch({ type: 'SET_TAB', tab: t })}
-                className="px-4 py-1.5 text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors rounded-full border border-gray-200 hover:border-gray-300"
+                className="shrink-0 px-3 md:px-4 py-1.5 text-xs md:text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors rounded-full border border-gray-200 hover:border-gray-300"
               >
                 {t}
               </button>
@@ -129,18 +129,18 @@ export function SuggestionBar() {
         )}
 
         {showSuggestions && (
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-3">
-            <div className="flex items-center gap-2 mb-2">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-2 md:px-5 md:py-3">
+            <div className="flex items-center gap-2 mb-1.5 md:mb-2">
               {isBaseline ? (
                 <>
-                  <Sparkles className="w-4 h-4 text-orange-500" />
+                  <Sparkles className="w-4 h-4 text-orange-500 shrink-0" />
                   <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                     Suggestions
                   </span>
                 </>
               ) : (
                 <>
-                  <Wand2 className="w-4 h-4 text-orange-500" />
+                  <Wand2 className="w-4 h-4 text-orange-500 shrink-0" />
                   <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                     Recommended Edits
                   </span>
@@ -148,13 +148,13 @@ export function SuggestionBar() {
               )}
             </div>
 
-            <div className="flex flex-wrap gap-2 mb-3">
+            <div className="flex flex-nowrap md:flex-wrap gap-2 mb-2 md:mb-3 overflow-x-auto overflow-y-hidden pb-0.5 -mx-0.5 md:mx-0">
               {isBaseline ? (
                 suggestionChips.map((chip) => (
                   <button
                     key={chip}
                     onClick={() => handleChipClick(chip)}
-                    className="px-3 py-1.5 bg-white border border-gray-200 rounded-full text-xs text-gray-600 hover:border-orange-300 hover:text-orange-600 transition-colors"
+                    className="shrink-0 px-3 py-1.5 bg-white border border-gray-200 rounded-full text-xs text-gray-600 hover:border-orange-300 hover:text-orange-600 transition-colors"
                   >
                     {chip}
                   </button>
@@ -164,7 +164,7 @@ export function SuggestionBar() {
                   <button
                     key={rec}
                     onClick={() => handleRecommendationClick(rec)}
-                    className="px-3 py-1.5 bg-white border border-gray-200 rounded-full text-xs text-gray-600 hover:border-orange-300 hover:text-orange-600 transition-colors"
+                    className="shrink-0 px-3 py-1.5 bg-white border border-gray-200 rounded-full text-xs text-gray-600 hover:border-orange-300 hover:text-orange-600 transition-colors"
                   >
                     {rec}
                   </button>
@@ -172,7 +172,7 @@ export function SuggestionBar() {
               ) : null}
             </div>
 
-            <div className="flex items-center gap-2 bg-gray-50 rounded-full border border-gray-200 px-3 py-1.5">
+            <div className="flex items-center gap-2 bg-gray-50 rounded-full border border-gray-200 px-3 py-1.5 min-w-0">
               <input
                 type="text"
                 value={input}

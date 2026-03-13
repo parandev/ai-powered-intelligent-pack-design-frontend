@@ -28,16 +28,16 @@ export function OperationalMappingPage() {
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
-      <div className="flex-1 overflow-y-auto">
-        <div className="px-6 py-4 border-b border-gray-200 bg-white">
-        <div className="flex items-center justify-between mb-3">
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        <div className="px-4 sm:px-6 py-4 border-b border-gray-200 bg-white">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
           <div>
             <h2 className="text-base font-semibold text-gray-900">Operational Mapping</h2>
             <p className="text-xs text-gray-500">
               {state.sessionState?.spec?.size_or_volume || '10ml'} {productName} — End-To-End Production & Logistics Plan
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <button className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900">
               <Download className="w-4 h-4" />
               Download
@@ -56,7 +56,7 @@ export function OperationalMappingPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-4 gap-4 mb-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4">
           <KpiCard
             title="Total Lead Time"
             value="15 Weeks"
@@ -86,7 +86,7 @@ export function OperationalMappingPage() {
         <SubTabs tabs={subTabs} activeTab={activeSubTab} onTabChange={setActiveSubTab} />
       </div>
 
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         {activeSubTab === 'Production Timeline' && (
           <div className="space-y-6">
             <div className="bg-white rounded-xl border border-gray-200 p-5">
